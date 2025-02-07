@@ -72,6 +72,17 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+{
+  "builds": [
+    {
+      "src": "football/asgi.py",
+      "use": "@railway/python-asgi"
+    }
+  ]
+}
+
+
 ROOT_URLCONF = 'football.urls'
 
 TEMPLATES = [
