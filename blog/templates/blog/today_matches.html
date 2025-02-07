@@ -91,37 +91,36 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
 <script>
-     const socket = new WebSocket("wss://web-production-5e9b.up.railway.app/ws/matches/");
+    const socket = new WebSocket("wss://web-production-5e9b.up.railway.app/ws/matches/");
 
     socket.onopen = function() {
         console.log("WebSocket connected");
     };
 
     socket.onmessage = function(event) {
-    const response = JSON.parse(event.data);
-    console.log("Received data:", response);
+        const response = JSON.parse(event.data);
+        console.log("Received data:", response);
 
-    response.matches.forEach(data => {
-        const rows = document.querySelectorAll("tbody tr");
+        response.matches.forEach(data => {
+            const rows = document.querySelectorAll("tbody tr");
 
-        rows.forEach(row => {
-            let homeTeam = row.querySelector("td:nth-child(2)").textContent.trim();
-            let awayTeam = row.querySelector("td:nth-child(3)").textContent.trim();
+            rows.forEach(row => {
+                let homeTeam = row.querySelector("td:nth-child(2)").textContent.trim();
+                let awayTeam = row.querySelector("td:nth-child(3)").textContent.trim();
 
-            if (homeTeam === data.home_team && awayTeam === data.away_team) {
-                // Update match time
-                row.querySelector(".status").textContent = data.match_time;
+                if (homeTeam === data.home_team && awayTeam === data.away_team) {
+                    // Update match time
+                    row.querySelector(".status").textContent = data.match_time;
 
-                // Prevent "null-null" issue by using default values
-                const homeScore = data.home_score ?? 0;
-                const awayScore = data.away_score ?? 0;
+                    // Prevent "null-null" issue by using default values
+                    const homeScore = data.home_score ?? 0;
+                    const awayScore = data.away_score ?? 0;
 
-                row.querySelector("td:nth-child(5)").textContent = `${homeScore} - ${awayScore}`;
-            }
+                    row.querySelector("td:nth-child(5)").textContent = `${homeScore} - ${awayScore}`;
+                }
+            });
         });
-    });
-};
-
+    };
 
     socket.onclose = function(event) {
         console.error("WebSocket closed unexpectedly");
