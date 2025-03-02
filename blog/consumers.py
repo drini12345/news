@@ -1,7 +1,7 @@
 import json
 import asyncio
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from channels.generic.websocket import AsyncWebsocketConsumer
 from football.api import football_api
@@ -24,7 +24,7 @@ class MatchConsumer(AsyncWebsocketConsumer):
             matches = await self.get_live_matches()
             print("Sending matches:", matches)  # Add logging here
             await self.send(json.dumps({"matches": matches}))
-            await asyncio.sleep(30)  # Update every 30 seconds
+            await asyncio.sleep(10)  # Update every 10 seconds
 
     async def get_live_matches(self):
         response = requests.get(API_URL, headers=HEADERS)
@@ -52,23 +52,55 @@ class MatchConsumer(AsyncWebsocketConsumer):
         return []
 
     def calculate_match_time(self, start_time, status):
-        """Ensure match time is never negative."""
+        """Ensure correct match time, including half-time pause and second-half restart from 45:00."""
         now = datetime.now(pytz.UTC)
-        start_dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        
+        try:
+            start_dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        except ValueError:
+            return "Invalid Time"  # Handle incorrect date formats safely
 
-        if status == "TIMED":
+        # Match not started yet
+        if status in ["TIMED", "SCHEDULED"]:
             return "Not Started"
 
+        # Stop counting at half-time
         if status == "HALF_TIME":
             return "45:00 (HT)"
 
+        # Match paused (e.g., delayed, weather issues)
+        if status == "PAUSED":
+            return "HT"
+
+        # Match finished
         if status == "FINISHED":
-            return "FINISHED"
+            return "FULL TIME"
 
-        elapsed = now - start_dt
-        minutes = elapsed.total_seconds() // 60
+        if status == "SUSPENDED":
+            return "Suspended"
 
-        if minutes < 0:
-            return "Not Started"  # Prevent negative times
+        # Calculate elapsed time in minutes
+        elapsed = (now - start_dt).total_seconds() // 60
 
-        return f"{int(minutes)}:00" if minutes < 90 else "90:00+"
+        if elapsed < 0:
+            return "Not Started"  # Prevent negative values
+
+        # First half (0-45 min)
+        if elapsed < 45:
+            return f"{int(elapsed)}:00"
+
+        # **Ensure half-time pause**
+        half_time_duration = 15  # Standard half-time duration (adjust if needed)
+        second_half_start_time = start_dt + timedelta(minutes=45 + half_time_duration)
+
+        # **If still in half-time, don't count further**
+        if now < second_half_start_time:
+            return "45:00 +"  # Ensures the clock doesn't count up during half-time
+
+        # **Second half (45-90 min)**
+        second_half_minutes = (now - second_half_start_time).total_seconds() // 60
+
+        # Ensure second-half starts exactly from 45:00
+        return f"{45 + int(second_half_minutes)}:00" if second_half_minutes < 45 else "90:00+"
+
+
