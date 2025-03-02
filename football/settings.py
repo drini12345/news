@@ -56,22 +56,24 @@ MIDDLEWARE = [
 
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'asgi_redis.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('localhost', 6379)],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",  # ✅ Corrected
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
         },
-        'ROUTING': 'example_channels.routing.channel_routing',
-    }
+    },
 }
 
-ASGI_APPLICATION = "football.asgi.application"
 
+
+ASGI_APPLICATION = "football.asgi.application"
+"""
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
+"""
 
 
 {

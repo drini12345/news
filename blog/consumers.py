@@ -22,7 +22,7 @@ class MatchConsumer(AsyncWebsocketConsumer):
         """Fetch live match data and send updates to the frontend every 30 seconds."""
         while True:
             matches = await self.get_live_matches()
-            print("Sending matches:", matches)  # Add logging here
+            #print("Sending matches:", matches)  # Add logging here
             await self.send(json.dumps({"matches": matches}))
             await asyncio.sleep(10)  # Update every 10 seconds
 
